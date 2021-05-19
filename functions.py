@@ -1,3 +1,4 @@
+# Future plan: restructure functions to behave as class using OOP#
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -5,7 +6,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, OneHotEncoder, RobustScaler, QuantileTransformer, PowerTransformer, MaxAbsScaler, Normalizer
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-from IPython.display import display, HTML
+from IPython.display import display, HTML, Markdown
 from sklearn import metrics
 
 
@@ -96,7 +97,7 @@ def num_col_for_plotting(row, col=3):
         return row // col
 
 
-def df_distribution(df, n_cols=3, fig_size=(16, 26), color_plot='gold', kde_show=True, label_rotation=45):
+def distribution_of_features(df, n_cols=3, fig_size=(16, 26), color_plot='gold', kde_show=True, label_rotation=45,set_loglevel='warning'):
     """
     Parameters:
     ===========
@@ -112,9 +113,14 @@ def df_distribution(df, n_cols=3, fig_size=(16, 26), color_plot='gold', kde_show
                     `False` does not show kde plot.
     label_rotation = int; default: 45,
                     sets x label rotation.
+    set_loglevel = str; default: 'warning',
+                    The log level of the handler.
+                    "notset", "debug", "info", "warning", "error", "critical"
+                    
     
-    ---version 1.1---
+    ---version 1.2---
     """
+    plt.set_loglevel(set_loglevel)
     fig, axes = plt.subplots(nrows=num_col_for_plotting(len(df.columns),
                                                         col=n_cols),
                              ncols=n_cols,
@@ -130,17 +136,24 @@ def df_distribution(df, n_cols=3, fig_size=(16, 26), color_plot='gold', kde_show
                      fontsize=20,
                      fontweight=3,
                      va='bottom')
+    plt.show()
+        
 
 
-def df_preprocessing_pipeline(df, scaler=StandardScaler(), drop=None):
+def dataset_preprocessing_pipeline(X_train, X_test, scaler=StandardScaler(), drop=None):
     """
-    Seperates DataFrame by categorical and numerical coulmns, and performs OneHotEncoding with droping control on categorical coulumns and scaling on numerical columns, user can select scalers. Then returns a transformed DataFrame.
-    All steps are done using sklearn pipelines and transformers. 
+    Takes X_train, and X_test DataFrames. Then seperates DataFrame by categorical and numerical coulmns, and performs OneHotEncoding with droping control on categorical coulumns and scaling on numerical columns, user can select scalers. 
+    Returns transformed DataFrames.
+    
+    All transforming steps are done using scikit-learn preprocessing, pipeline, and compose objects; and DataFrame creation is done with pandas. 
     
     Parameters:
     ===========
-    df     = pandas.DataFrame object.
-    scaler = sklarn scaler object; default: StandardScaler(),
+    X_train = pandas.DataFrame object; no default,
+                training split of the DataFrame.
+    X_test  = pandas.DataFrame object; no default,
+                testing split of the DataFrame.
+    scaler  = `sklarn scaler object` or `None`; default: StandardScaler(),
                 *** IMPORT desired scaler before using. ***
                 *** OR call with this module. all of them are imported and ready 
                 to use inside this module.***
@@ -161,7 +174,9 @@ def df_preprocessing_pipeline(df, scaler=StandardScaler(), drop=None):
                     values are mapped in the range [0, 1]
                 - Normalizer: rescales the vector for each sample to have 
                     unit norm, independently of the distribution of the samples.
-    drop   = str or `None`, Option to control OHE droping; default: None.
+                - None: does not scale data.
+    drop    = str or `None`; default: None.
+                Option to control OneHotEncoder droping.
                 - None : retain all features (the default).
                 - 'first' : drop the first category in each feature. If only one
                   category is present, the feature will be dropped entirely.
@@ -170,15 +185,19 @@ def df_preprocessing_pipeline(df, scaler=StandardScaler(), drop=None):
                   left intact.
                 - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
                   should be dropped.
+    NOTE: 
+        - possible error if test data has unseen category; creating new 
+          DataFrame will fail.
+        - Source can be modified to add more preprocessing steps.
     
     Next steps: use OOP to make this a class.
 
-    ---version 0.9.1---
+    ---version 0.9.9---
     """
     # isolating numerical features
-    nume_cols = df.select_dtypes('number').columns.to_list()
+    nume_cols = X_train.select_dtypes('number').columns.to_list()
     # isolating categorical features
-    cate_cols = df.select_dtypes('category').columns.to_list()
+    cate_cols = X_train.select_dtypes('category').columns.to_list()
     # pipeline for processing categorical features
     pipe_cate = Pipeline([('ohe', OneHotEncoder(sparse=False, drop=drop))])
     # pipeline for processing numerical features
@@ -188,13 +207,88 @@ def df_preprocessing_pipeline(df, scaler=StandardScaler(), drop=None):
         ('numerical_features', pipe_nume, nume_cols),
         ('categorical_features', pipe_cate, cate_cols)
     ])
+    
     # creating a pandas.DataFrame with appropriate header
-    ret = pd.DataFrame(
-        preprocessor.fit_transform(df),
+    # creating modified X_train
+    ret_X_train = pd.DataFrame(
+        preprocessor.fit_transform(X_train),
         columns=nume_cols +
         preprocessor.named_transformers_['categorical_features'].
         named_steps['ohe'].get_feature_names(cate_cols).tolist())
-    return ret
+    
+    # creating modified X_test
+    # NOTE: possible error if test data has unseen category, in this step.
+    # for debugging such error modify this and its processing.
+    ret_X_test = pd.DataFrame(
+        preprocessor.transform(X_test),
+        columns=nume_cols +
+        preprocessor.named_transformers_['categorical_features'].
+        named_steps['ohe'].get_feature_names(cate_cols).tolist())
+    return ret_X_train, ret_X_test
+
+# def df_preprocessing_pipeline(df, scaler=StandardScaler(), drop=None):
+#     """ **Error in judgment**
+#     Seperates DataFrame by categorical and numerical coulmns, and performs OneHotEncoding with droping control on categorical coulumns and scaling on numerical columns, user can select scalers. Then returns a transformed DataFrame.
+#     All steps are done using sklearn pipelines and transformers. 
+    
+#     Parameters:
+#     ===========
+#     df     = pandas.DataFrame object.
+#     scaler = sklarn scaler object; default: StandardScaler(),
+#                 *** IMPORT desired scaler before using. ***
+#                 *** OR call with this module. all of them are imported and ready 
+#                 to use inside this module.***
+#                 Available options:
+#                 - StandardScaler: removes the mean and scales the data to 
+#                     unit variance. 
+#                 - MinMaxScaler: rescales the data set such that all feature 
+#                     values are in the range [0, 1]
+#                 - RobustScaler: is based on percentiles and are therefore not
+#                     influenced by a few number of very large marginal outliers.
+#                 - QuantileTransformer: applies a non-linear transformation 
+#                     such that the probability density function of each feature
+#                     will be mapped to a uniform or Gaussian distribution.
+#                 - PowerTransformer: applies a power transformation to each 
+#                     feature to make the data more Gaussian-like in order to 
+#                     stabilize variance and minimize skewness.
+#                 - MaxAbsScaler: is similar to `MinMaxScaler` except that the
+#                     values are mapped in the range [0, 1]
+#                 - Normalizer: rescales the vector for each sample to have 
+#                     unit norm, independently of the distribution of the samples.
+#     drop   = str or `None`, Option to control OHE droping; default: None.
+#                 - None : retain all features (the default).
+#                 - 'first' : drop the first category in each feature. If only one
+#                   category is present, the feature will be dropped entirely.
+#                 - 'if_binary' : drop the first category in each feature with two
+#                   categories. Features with 1 or more than 2 categories are
+#                   left intact.
+#                 - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
+#                   should be dropped.
+    
+#     Next steps: use OOP to make this a class.
+
+#     ---version 0.9.1---
+#     """
+#     # isolating numerical features
+#     nume_cols = df.select_dtypes('number').columns.to_list()
+#     # isolating categorical features
+#     cate_cols = df.select_dtypes('category').columns.to_list()
+#     # pipeline for processing categorical features
+#     pipe_cate = Pipeline([('ohe', OneHotEncoder(sparse=False, drop=drop))])
+#     # pipeline for processing numerical features
+#     pipe_nume = Pipeline([('scaler', scaler)])
+#     # Coulmn transformer
+#     preprocessor = ColumnTransformer([
+#         ('numerical_features', pipe_nume, nume_cols),
+#         ('categorical_features', pipe_cate, cate_cols)
+#     ])
+#     # creating a pandas.DataFrame with appropriate header
+#     ret = pd.DataFrame(
+#         preprocessor.fit_transform(df),
+#         columns=nume_cols +
+#         preprocessor.named_transformers_['categorical_features'].
+#         named_steps['ohe'].get_feature_names(cate_cols).tolist())
+#     return ret
 
 def coefficients_of_model_binary(model,X_train_data, log_scale=True):
     """
@@ -260,19 +354,19 @@ def model_report(model,
     y_test    = pandas.DataFrame, target variable test data split; no default,
     cmap      = str, colormap of Confusion Matrix; default: 'Greens',
     normalize = str, normalize count of Confusion Matrix; default: 'true',
-                `true` to normalize.
-                `false` to show counts.
+                `true` to normalize counts.
+                `false` to show raw scounts.
     figsize   = tuple ``(lenght, height)``, figsize of output; default: (16, 6),
     
-    ---version 0.9---
+    ---version 0.9.9---
     """
     
     def str_model_(model):
-        """Helper function to get model class display statement, this text conversion breaks code if performed in that local space. This is to isolate from the function local space."""
-        str_model = str(model)
+        """Helper function to get model class display statement, this text conversion breaks code if performed in ``model_report`` function's local space. This function is to isolate from the previous function's local space."""
+        str_model = str(model.__class__).split('.')[-1][:-2]
         display(
             HTML(
-                f"""<strong>Report of {str_model.split('(')[0]} type model using train-test split dataset.</strong>"""
+                f"""<strong>Report of {str_model} type model using train-test split dataset.</strong>"""
             ))
 
     str_model_(model)
@@ -280,19 +374,19 @@ def model_report(model,
     print(f"{'*'*90}")
     train = model.score(X_train, y_train)
     test = model.score(X_test, y_test)
-    print(f"""Train score: {train.round(4)}""")
-    print(f"""Test score: {test.round(4)}""")
+    print(f"""Train accuracy score: {train.round(4)}""")
+    print(f"""Test accuracy score: {test.round(4)}""")
     if abs(train - test) <= .05:
         print(
             f"    No over or underfitting detected, diffrence of scores did not cross 5% thresh hold."
         )
     elif (train - test) > .05:
         print(
-            f"    Possible Overfitting, diffrence of scores {abs(train-test).round(4)*100}% crossed 5% thresh hold."
+            f"    Possible Overfitting, diffrence of scores {round(abs(train-test)*100,2)}% crossed 5% thresh hold."
         )
     elif (train - test) < -.05:
         print(
-            f"    Possible Underfitting, diffrence of scores {abs(train-test).round(4)*100}% crossed 5% thresh hold."
+            f"    Possible Underfitting, diffrence of scores {round(abs(train-test)*100,2)}% crossed 5% thresh hold."
         )
     print(f"{'*'*90}")
     print("")
@@ -322,3 +416,109 @@ def model_report(model,
 
     plt.tight_layout()
     plt.show()
+
+def heatmap_of_features(df, annot_format='.1f'):
+    """
+    Return a masked heatmap of the given DataFrame
+    
+    Parameters:
+    ===========
+    df            = pandas.DataFrame object.
+    annot_format  = str, for formatting; default: '.1f'
+    
+    Example of `annot_format`:
+    --------------------------
+    .1e = scientific notation with 1 decimal point (standard form)
+    .2f = 2 decimal places
+    .3g = 3 significant figures
+    .4% = percentage with 4 decimal places
+    
+    Note:
+    =====
+    Rounding error can happen if '.1f' is used.
+    
+    -- version: 1.1 --
+    """
+    with plt.style.context('dark_background'):
+        plt.figure(figsize=(10, 10), facecolor='k')
+        mask = np.triu(np.ones_like(df.corr(), dtype=bool))
+        cmap = sns.diverging_palette(3, 3, as_cmap=True)
+        ax = sns.heatmap(df.corr(),
+                    mask=mask,
+                    cmap=cmap,
+                    annot=True,
+                    fmt=annot_format,
+                    linecolor='k',
+                    annot_kws={"size": 9},
+                    square=True,
+                    linewidths=.5,
+                    cbar_kws={"shrink": .5})
+        plt.title(f'Features heatmap', fontdict={"size": 20})
+        plt.show()
+        return ax
+    
+def top_correlated_features(df, limit=.75, verbose=False):
+    """
+    Input a Pandas DataFrame to get top correlated (based on absolute value) features filtered by a cutoff.
+    
+    Parameters:
+    ===========
+    df        = pandas.DataFrame object.
+    limit     = float; default: .75
+    verbose   = boolean; default: False. 
+                `True` returns DataFrame without filtering by cutoff.
+                `False` returns DataFrame filted by cutoff.
+    """
+    df_corr = df.corr().abs().unstack().reset_index().sort_values(
+        0, ascending=False)
+    df_corr.columns = ["feature_0", 'feature_1', 'correlation']
+    df_corr['keep_me'] = df_corr.apply(
+        lambda x: False if x['feature_0'] == x['feature_1'] else True, axis=1)
+    df_corr['feature_combo'] = df_corr.apply(
+        lambda x: ' and '.join(set(x[['feature_0', 'feature_1']])), axis=1)
+
+    corr_features = df_corr[df_corr.keep_me == True][[
+        'feature_combo', 'correlation'
+    ]].drop_duplicates().reset_index(drop='index')
+    # features with correlation more than 75%
+    if verbose == True:
+        return corr_features
+    else:
+        return corr_features[corr_features.correlation > limit]
+
+def drop_features_based_on_correlation(df, threshold=0.75):
+    """
+    Returns features with high collinearity.
+    
+    Parameters:
+    ===========
+    df = pandas.DataFrame; no default.
+            data to work on.
+    threshold = float; default: .75.
+            Cut off value of check of collinearity.
+    -- ver: 1.0 --
+    """
+    feature_corr = set()  # Set of all the names of correlated columns
+    corr_matrix = df.corr()
+    for i in range(len(corr_matrix.columns)):
+        for j in range(i):
+            if abs(corr_matrix.iloc[i, j]
+                   ) > threshold:  # absolute coeff value
+                colname = corr_matrix.columns[i]  # getting the name of column
+                feature_corr.add(colname)
+    return feature_corr
+
+def show_py_file_content(file='functions.py'):
+    """
+    displays content of a py file output formatted as python code in jupyter notebook.
+    
+    Parameter:
+    ==========
+    file = `str`; default: 'functions.py',
+                path to the py file.
+    """
+    with open(file, 'r') as f:
+        x = f"""```python
+{f.read()}
+```"""
+        display(Markdown(x))
