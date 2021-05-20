@@ -1,6 +1,6 @@
-def example_pac(strr='Hellow World!!'):
+def example_pac(str_='Hellow World!!'):
     """testing import"""
-    print(strr)
+    print(str_)
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -287,6 +287,8 @@ def model_report(model,
     Report of model using train-test split dataset.
     Shows train and test score, Confusion Matrix of test data and, ROC Curve of test data.
     
+    Intended to work only on model where target has binomial value.
+    
     Parameters:
     ===========
     model     = object, scikit-learn model object; no default.
@@ -450,7 +452,7 @@ def drop_features_based_on_correlation(df, threshold=0.75):
                 feature_corr.add(colname)
     return feature_corr
 
-def show_py_file_content(file='functions.py'):
+def show_py_file_content(file='./imports_and_functions/functions.py'):
     """
     displays content of a py file output formatted as python code in jupyter notebook.
     
@@ -534,6 +536,7 @@ def z_dataset_preprocessing_pipeline(X_train,
     Next steps: 
     - use OOP to make this a class. 
     - Add oversampling method changing option.
+    - add imputer in the pipeline
 
     ---version 0.0.1---
     """
