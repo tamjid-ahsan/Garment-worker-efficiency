@@ -1,7 +1,3 @@
-def example_pac(str_='Hellow World!!'):
-    """testing import"""
-    print(str_)
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -12,8 +8,14 @@ from sklearn.compose import ColumnTransformer
 from IPython.display import display, HTML, Markdown
 from sklearn import metrics
 from imblearn.over_sampling import SMOTE,SMOTENC
-# Future plan: restructure functions to behave as class using OOP#
+import joblib 
+import time
+# Future plan: restructure functions to behave as attached to class using OOP#
 
+def its_alive(str_='Hellow World!! I am Alive!!!'):
+    """testing import"""
+    print(str_)
+    
 def check_NaN(df):
     """
     Checks for NaN in the pandas DataFrame and spits a DataFrame of report.
@@ -22,6 +24,10 @@ def check_NaN(df):
     Parameters:
     ===========
     df = pandas.DataFrame
+    
+    Return:
+    =======
+    pandas.DataFrame
 
     ---version 0.9---
     """
@@ -52,6 +58,10 @@ def check_duplicates(df, verbose=False, limit_output=True, limit_num=150):
                 `True` limits featurs display to 150.
                 `False` details of unique features.
     limit_num = `int`, limit number of uniques; default: 150,
+
+    Return:
+    =======
+    pandas.DataFrame
 
     ---version 1.2---
     """
@@ -94,6 +104,10 @@ def num_col_for_plotting(row, col=3):
     ===========
     row = int;
     col = int; default col: 3
+
+    Return:
+    =======
+    `int` == row // col
     """
     if row % col != 0:
         return (row // col) + 1
@@ -101,8 +115,10 @@ def num_col_for_plotting(row, col=3):
         return row // col
 
 
-def distribution_of_features(df, n_cols=3, fig_size=(16, 26), color_plot='gold', kde_show=True, label_rotation=45,set_loglevel='warning'):
+def distribution_of_features(df, n_cols=3, fig_size=(16, 26), color_plot='gold', kde_show=True, label_rotation=45, set_loglevel='warning'):
     """
+    Plots distribution of features in a pandas.DataFrame.
+
     Parameters:
     ===========
     df          = pandas.DataFrame,
@@ -118,13 +134,14 @@ def distribution_of_features(df, n_cols=3, fig_size=(16, 26), color_plot='gold',
     label_rotation = int; default: 45,
                     sets x label rotation.
     set_loglevel = str; default: 'warning',
-                    The log level of the handler.
-                    "notset", "debug", "info", "warning", "error", "critical"
+                    The log level of matplotlib warning handler.
+                    - options = {"notset", "debug", "info", "warning", "error", "critical"}
                     
     
     ---version 1.2---
     """
     plt.set_loglevel(set_loglevel)
+
     fig, axes = plt.subplots(nrows=num_col_for_plotting(len(df.columns),
                                                         col=n_cols),
                              ncols=n_cols,
@@ -189,6 +206,11 @@ def dataset_preprocessing_pipeline(X_train, X_test, scaler=StandardScaler(), dro
                   left intact.
                 - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
                   should be dropped.
+    Return:
+    =======
+    X_train = modified pandas.DataFrame
+    X_test  = modified pandas.DataFrame
+    
     NOTE: 
         - possible error if test data has unseen category; creating new 
           DataFrame will fail.
@@ -204,17 +226,19 @@ def dataset_preprocessing_pipeline(X_train, X_test, scaler=StandardScaler(), dro
     nume_cols = X_train.select_dtypes('number').columns.to_list()
     # isolating categorical features
     cate_cols = X_train.select_dtypes('category').columns.to_list()
+    
     # pipeline for processing categorical features
     pipe_cate = Pipeline([('ohe', OneHotEncoder(sparse=False, drop=drop))])
     # pipeline for processing numerical features
     pipe_nume = Pipeline([('scaler', scaler)])
+    
     # Coulmn transformer
     preprocessor = ColumnTransformer([
         ('numerical_features', pipe_nume, nume_cols),
         ('categorical_features', pipe_cate, cate_cols)
     ])
     
-    # creating a pandas.DataFrame with appropriate header
+    ## creating a pandas.DataFrame with appropriate column name
     # creating modified X_train
     ret_X_train = pd.DataFrame(
         preprocessor.fit_transform(X_train),
@@ -234,7 +258,7 @@ def dataset_preprocessing_pipeline(X_train, X_test, scaler=StandardScaler(), dro
 
 def coefficients_of_model_binary(model,X_train_data, log_scale=True):
     """
-    Returns a pandas.Series object with intercept and coeffients of a logistic regression model with features as index
+    Returns a pandas.Series object with intercept and coeffients of a logistic regression model with features as index.
     
     Parameters:
     ===========
@@ -254,20 +278,18 @@ def coefficients_of_model_binary(model,X_train_data, log_scale=True):
         coeffs = np.exp(coeffs)
     return coeffs
 
-def coefficients_of_model(model,X_train_data,log_scale=True):
+def coefficients_of_model(model, log_scale=True):
     """
     Returns a pandas.Series object with intercept and coeffients.
+    
     Parameters:
     ===========
     model        = object; No Default. 
                     fitted sklearn model object with a coef_ and intercept_ attribute.
-    X_train_data = pandas.DataFrame; No Default.
-                    DataFrame of independant variables. Should be train-test splitted. 
-                    Use train data.  
     log_scale    = boolean; default: True.
                     `True` for keeping log scale of coefficients.
                     `False` for converting to normal scale.
-
+    
     """
     coeffs = pd.Series(model.coef_.flatten())
     coeffs['intercept'] = model.intercept_[0]
@@ -275,91 +297,41 @@ def coefficients_of_model(model,X_train_data,log_scale=True):
         coeffs = np.exp(coeffs)
     return coeffs
 
-def model_report(model,
-                 X_train,
-                 y_train,
-                 X_test,
-                 y_test,
-                 cmap='Greens',
-                 normalize='true',
-                 figsize=(16, 6)):
+def save_model(model, location='',custom_prefix=''):
     """
-    Report of model using train-test split dataset.
-    Shows train and test score, Confusion Matrix of test data and, ROC Curve of test data.
-    
-    Intended to work only on model where target has binomial value.
-    
+    Saves object locally as binary format with and as joblib.
+
     Parameters:
     ===========
-    model     = object, scikit-learn model object; no default.
-    X_train   = pandas.DataFrame, predictor variable training data split; no default,
-    y_train   = pandas.DataFrame, target variable training data split; no default,
-    X_test    = pandas.DataFrame, predictor variable test data split; no default,
-    y_test    = pandas.DataFrame, target variable test data split; no default,
-    cmap      = str, colormap of Confusion Matrix; default: 'Greens',
-    normalize = str, normalize count of Confusion Matrix; default: 'true',
-                `true` to normalize counts.
-                `false` to show raw scounts.
-    figsize   = tuple ``(lenght, height)``, figsize of output; default: (16, 6),
+    model = object to save,
+    location = str; default: '',
+            File save location. If empty, i.e., "", saves at root.
+    custom_prefix = str; default: '',
+            Adds prefix to file
     
-    ---version 0.9.9---
+    --version 0.0.1--
+    
     """
-    
     def str_model_(model):
-        """Helper function to get model class display statement, this text conversion breaks code if performed in ``model_report`` function's local space. This function is to isolate from the previous function's local space."""
+        """Helper function to get model class display statement, this text conversion breaks code if performed in ``save_model`` function's local space. This function is to isolate from the previous function's local space."""
         str_model = str(model.__class__).split('.')[-1][:-2]
-        display(
-            HTML(
-                f"""<strong>Report of {str_model} type model using train-test split dataset.</strong>"""
-            ))
+        return str_model
 
-    str_model_(model)
-    model.fit(X_train, y_train)
-    print(f"{'*'*90}")
-    train = model.score(X_train, y_train)
-    test = model.score(X_test, y_test)
-    print(f"""Train accuracy score: {train.round(4)}""")
-    print(f"""Test accuracy score: {test.round(4)}""")
-    if abs(train - test) <= .05:
-        print(
-            f"    No over or underfitting detected, diffrence of scores did not cross 5% thresh hold."
-        )
-    elif (train - test) > .05:
-        print(
-            f"    Possible Overfitting, diffrence of scores {round(abs(train-test)*100,2)}% crossed 5% thresh hold."
-        )
-    elif (train - test) < -.05:
-        print(
-            f"    Possible Underfitting, diffrence of scores {round(abs(train-test)*100,2)}% crossed 5% thresh hold."
-        )
-    print(f"{'*'*90}")
-    print("")
-    print(f"{'*'*60}")
-    print(f"""Classification report of:
-    {model}""")
-    print(f"{'-'*60}")
-    print(metrics.classification_report(y_test, model.predict(X_test)))
-    print(f"{'*'*60}")
+    # get model name
+    name = str_model_(model)
+    # save time
+    month = str(time.localtime().tm_mon)
+    day = str(time.localtime().tm_mday)
+    year = str(time.localtime().tm_year)
+    hour = str(time.localtime().tm_hour)
+    min_ = str(time.localtime().tm_min)
+    sec = str(time.localtime().tm_sec)
+    save_time = '_'.join([month, day, year, hour, min_, sec])
 
-    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=figsize)
-    metrics.plot_confusion_matrix(model,
-                                  X_test,
-                                  y_test,
-                                  cmap=cmap,
-                                  normalize=normalize,
-                                  ax=ax[0])
-    ax[0].title.set_text('Confusion Matrix')
-    metrics.plot_roc_curve(model,
-                           X_test,
-                           y_test,
-                           color='gold',
-                           ax=ax[1])
-    ax[1].plot([0, 1], [0, 1], ls='-.', color='white')
-    ax[1].grid()
-    ax[1].title.set_text('ROC Curve')
-
-    plt.tight_layout()
-    plt.show()
+    file_name_ = '_'.join([custom_prefix, name, save_time])
+    save_path = location+file_name_+'.joblib'
+    joblib.dump(model, save_path)
+    print(f'File saved: {save_path}')
 
 def heatmap_of_features(df, annot_format='.1f'):
     """
@@ -440,15 +412,18 @@ def drop_features_based_on_correlation(df, threshold=0.75):
             data to work on.
     threshold = float; default: .75.
             Cut off value of check of collinearity.
+    
     -- ver: 1.0 --
     """
-    feature_corr = set()  # Set of all the names of correlated columns
+    # Set of all the names of correlated columns
+    feature_corr = set()
     corr_matrix = df.corr()
     for i in range(len(corr_matrix.columns)):
         for j in range(i):
-            if abs(corr_matrix.iloc[i, j]
-                   ) > threshold:  # absolute coeff value
-                colname = corr_matrix.columns[i]  # getting the name of column
+            # absolute coeff value
+            if abs(corr_matrix.iloc[i, j]) > threshold:
+                # getting the name of column
+                colname = corr_matrix.columns[i]
                 feature_corr.add(colname)
     return feature_corr
 
@@ -474,7 +449,7 @@ def z_dataset_preprocessing_pipeline(X_train,
                                      drop=None,
                                      oversampling=True,
                                      return_pipeline_object=False):
-    """ Work in progress. Code works good enough.
+    """ ######## Work in progress. Code works good enough.
     Takes X_train, and X_test DataFrames. Then seperates DataFrame by categorical and numerical coulmns, and performs OneHotEncoding with droping control on categorical coulumns and scaling on numerical columns, user can select scalers. 
     Returns transformed DataFrames.
     
@@ -593,3 +568,282 @@ def z_dataset_preprocessing_pipeline(X_train,
         else:
             return ret_X_train, ret_X_test
     
+def z_model_report_(model,
+                 X_train,
+                 y_train,
+                 X_test,
+                 y_test,
+                 cmap='Greens',
+                 normalize='true',
+                 figsize=(16, 6), 
+                 show_train_report=False,
+                 show_train_roc=False):
+    """ ######## Work in progress, code works.
+    Report of model performance using train-test split dataset.
+    Shows train and test score, Confusion Matrix and, ROC Curve of performane of test data.
+    
+    Intended to work ONLY on model where target has properly encoded binomial class value.
+    
+    Parameters:
+    ===========
+    model     = object, scikit-learn model object; no default.
+    X_train   = pandas.DataFrame, predictor variable training data split; no default,
+    y_train   = pandas.DataFrame, target variable training data split; no default,
+    X_test    = pandas.DataFrame, predictor variable test data split; no default,
+    y_test    = pandas.DataFrame, target variable test data split; no default,
+    cmap      = str, colormap of Confusion Matrix; default: 'Greens',
+    normalize = str, normalize count of Confusion Matrix; default: 'true',
+                - `true` to normalize counts.
+                - `false` to show raw scounts.
+    figsize   = tuple ``(lenght, height)``, figsize of output; default: (16, 6),
+    show_train_report= boolean; default: False,
+                - True, to show report.
+                - False, to turn off report.
+    
+    Future plan:
+    - `save model` option in local drive using joblib
+
+    ---version 0.0.1---
+    """
+    def str_model_(model):
+        """Helper function to get model class display statement, this text conversion breaks code if performed in ``model_report`` function's local space. This function is to isolate from the previous function's local space."""
+        str_model = str(model.__class__).split('.')[-1][:-2]
+        display(
+            HTML(
+                f"""<strong>Report of {str_model} type model using train-test split dataset.</strong>"""
+            ))
+
+    str_model_(model)
+    X_train = X_train.copy()
+    y_train = y_train.copy()
+    model.fit(X_train, y_train)
+    print(f"{'*'*90}")
+    train = model.score(X_train, y_train)
+    test = model.score(X_test, y_test)
+    print(f"""Train accuracy score: {train.round(4)}""")
+    print(f"""Test accuracy score: {test.round(4)}""")
+    if abs(train - test) <= .05:
+        print(
+            f"    No over or underfitting detected, diffrence of scores did not cross 5% thresh hold."
+        )
+    elif (train - test) > .05:
+        print(
+            f"    Possible Overfitting, diffrence of scores {round(abs(train-test)*100,2)}% crossed 5% thresh hold."
+        )
+    elif (train - test) < -.05:
+        print(
+            f"    Possible Underfitting, diffrence of scores {round(abs(train-test)*100,2)}% crossed 5% thresh hold."
+        )
+    print(f"{'*'*90}")
+    print("")
+    print(f"{'*'*60}")
+    
+    if (show_train_roc) & (show_train_report):
+        print(f"""Classification report on train data of:
+        {model}""")
+        print(f"{'-'*60}")
+        print(metrics.classification_report(y_train, model.predict(X_train)))
+        print(f"{'*'*60}")
+        print(f"{'*'*60}")
+        fig, ax = plt.subplots(nrows=1, ncols=2, figsize=figsize)
+        metrics.plot_confusion_matrix(model,
+                                    X_test,
+                                    y_test,
+                                    cmap=cmap,
+                                    normalize=normalize,
+                                    ax=ax[0])
+        ax[0].title.set_text('Confusion Matrix')
+        metrics.plot_roc_curve(model,
+                            X_test,
+                            y_test,
+                            color='gold',
+                            ax=ax[1])
+        ax[1].plot([0, 1], [0, 1], ls='-.', color='white')
+        ax[1].grid()
+        ax[1].title.set_text('ROC Curve')
+
+        plt.tight_layout()
+        plt.show()
+        print(f"{'*'*60}")
+    elif (show_train_report is True) & (show_train_roc is False):
+        print(f"""Classification report on train data of:
+        {model}""")
+        print(f"{'-'*60}")
+        print(metrics.classification_report(y_train, model.predict(X_train)))
+        print(f"{'*'*60}")
+        print(f"{'*'*60}")
+    elif show_train_roc:
+        print(f"""Confusion Matrix and ROC curve on train data of:
+        {model}""")
+        print(f"{'-'*60}")        
+        fig, ax = plt.subplots(nrows=1, ncols=2, figsize=figsize)
+        metrics.plot_confusion_matrix(model,
+                                    X_test,
+                                    y_test,
+                                    cmap=cmap,
+                                    normalize=normalize,
+                                    ax=ax[0])
+        ax[0].title.set_text('Confusion Matrix')
+        metrics.plot_roc_curve(model,
+                            X_test,
+                            y_test,
+                            color='gold',
+                            ax=ax[1])
+        ax[1].plot([0, 1], [0, 1], ls='-.', color='white')
+        ax[1].grid()
+        ax[1].title.set_text('ROC Curve')
+
+        plt.tight_layout()
+        plt.show()
+        print(f"{'*'*60}")
+
+    print(f"""Classification report on test data of:
+    {model}""")
+    print(f"{'-'*60}")
+    print(metrics.classification_report(y_test, model.predict(X_test)))
+    print(f"{'*'*60}")
+
+    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=figsize)
+    metrics.plot_confusion_matrix(model,
+                                  X_test,
+                                  y_test,
+                                  cmap=cmap,
+                                  normalize=normalize,
+                                  ax=ax[0])
+    ax[0].title.set_text('Confusion Matrix')
+    metrics.plot_roc_curve(model,
+                           X_test,
+                           y_test,
+                           color='gold',
+                           ax=ax[1])
+    ax[1].plot([0, 1], [0, 1], ls='-.', color='white')
+    ax[1].grid()
+    ax[1].title.set_text('ROC Curve')
+
+    plt.tight_layout()
+    plt.show()
+
+def model_report(model,
+                 X_train,
+                 y_train,
+                 X_test,
+                 y_test,
+                 cmap='Greens',
+                 normalize='true',
+                 figsize=(16, 6), 
+                 show_train_report=False):
+    """ Work in progress
+    Report of model performance using train-test split dataset.
+    Shows train and test score, Confusion Matrix and, ROC Curve of performane of test data.
+    
+    Intended to work ONLY on model where target has properly encoded binomial class value.
+    
+    Parameters:
+    ===========
+    model     = object, scikit-learn model object; no default.
+    X_train   = pandas.DataFrame, predictor variable training data split; no default,
+    y_train   = pandas.DataFrame, target variable training data split; no default,
+    X_test    = pandas.DataFrame, predictor variable test data split; no default,
+    y_test    = pandas.DataFrame, target variable test data split; no default,
+    cmap      = str, colormap of Confusion Matrix; default: 'Greens',
+    normalize = str, normalize count of Confusion Matrix; default: 'true',
+                - `true` to normalize counts.
+                - `false` to show raw scounts.
+    figsize   = tuple ``(lenght, height)``, figsize of output; default: (16, 6),
+    show_train_report = boolean; default: False,
+                - True, to show report.
+                - False, to turn off report.
+    
+    Future plan:
+    - `save model` option in local drive using joblib
+
+    ---version 0.9.11---
+    """
+    def str_model_(model):
+        """Helper function to get model class display statement, this text conversion breaks code if 
+        performed in ``model_report`` function's local space. This function is to isolate from the 
+        previous function's local space."""
+        str_model = str(model.__class__).split('.')[-1][:-2]
+        display(
+            HTML(
+                f"""<strong>Report of {str_model} type model using train-test split dataset.</strong>"""
+            ))
+
+    str_model_(model)
+    X_train = X_train.copy()
+    y_train = y_train.copy()
+    model.fit(X_train, y_train)
+    print(f"{'*'*90}")
+    train = model.score(X_train, y_train)
+    test = model.score(X_test, y_test)
+    print(f"""Train accuracy score: {train.round(4)}""")
+    print(f"""Test accuracy score: {test.round(4)}""")
+    if abs(train - test) <= .05:
+        print(
+            f"    No over or underfitting detected, diffrence of scores did not cross 5% thresh hold."
+        )
+    elif (train - test) > .05:
+        print(
+            f"    Possible Overfitting, diffrence of scores {round(abs(train-test)*100,2)}% crossed 5% thresh hold."
+        )
+    elif (train - test) < -.05:
+        print(
+            f"    Possible Underfitting, diffrence of scores {round(abs(train-test)*100,2)}% crossed 5% thresh hold."
+        )
+    print(f"{'*'*90}")
+    print("")
+    print(f"{'*'*60}")
+    
+    if show_train_report:
+        print(f"""Classification report on train data of:
+        {model}""")
+        print(f"{'-'*60}")
+        print(metrics.classification_report(y_train, model.predict(X_train)))
+        print(f"{'*'*60}")
+        fig, ax = plt.subplots(nrows=1, ncols=2, figsize=figsize)
+        metrics.plot_confusion_matrix(model,
+                                      X_test,
+                                      y_test,
+                                      cmap=cmap,
+                                      normalize=normalize,
+                                      ax=ax[0])
+        ax[0].title.set_text('Confusion Matrix')
+        metrics.plot_roc_curve(model,
+                               X_test,
+                               y_test,
+                               color='gold',
+                               ax=ax[1])
+        ax[1].plot([0, 1], [0, 1], ls='-.', color='white')
+        ax[1].grid()
+        ax[1].title.set_text('ROC Curve')
+
+        plt.tight_layout()
+        plt.show()
+        print(f"{'='*170}")
+        print(f"{'*'*60}")
+    
+    print(f"""Classification report on test data of:
+    {model}""")
+    print(f"{'-'*60}")
+    print(metrics.classification_report(y_test, model.predict(X_test)))
+    print(f"{'*'*60}")
+
+    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=figsize)
+    metrics.plot_confusion_matrix(model,
+                                  X_test,
+                                  y_test,
+                                  cmap=cmap,
+                                  normalize=normalize,
+                                  ax=ax[0])
+    ax[0].title.set_text('Confusion Matrix')
+    metrics.plot_roc_curve(model,
+                           X_test,
+                           y_test,
+                           color='gold',
+                           ax=ax[1])
+    ax[1].plot([0, 1], [0, 1], ls='-.', color='white')
+    ax[1].grid()
+    ax[1].title.set_text('ROC Curve')
+
+    plt.tight_layout()
+    plt.show()
