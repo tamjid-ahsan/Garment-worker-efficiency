@@ -7,10 +7,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from IPython.display import display, HTML, Markdown
 from sklearn import metrics
-from imblearn.over_sampling import SMOTE,SMOTENC
+from imblearn.over_sampling import SMOTE, SMOTENC
 import joblib 
 import time
 # Future plan: restructure functions to behave as attached to class using OOP#
+# handle multinomial target plotting
 
 def its_alive(str_='Hellow World!! I am Alive!!!'):
     """testing import"""
@@ -25,8 +26,8 @@ def check_NaN(df):
     ===========
     df = pandas.DataFrame
     
-    Return:
-    =======
+    Returns:
+    ========
     pandas.DataFrame
 
     ---version 0.9---
@@ -59,8 +60,8 @@ def check_duplicates(df, verbose=False, limit_output=True, limit_num=150):
                 `False` details of unique features.
     limit_num = `int`, limit number of uniques; default: 150,
 
-    Return:
-    =======
+    Returns:
+    ========
     pandas.DataFrame
 
     ---version 1.2---
@@ -313,7 +314,10 @@ def save_model(model, location='',custom_prefix=''):
     
     """
     def str_model_(model):
-        """Helper function to get model class display statement, this text conversion breaks code if performed in ``save_model`` function's local space. This function is to isolate from the previous function's local space."""
+        """Helper function to get model class display statement, this text 
+        conversion breaks code if performed in ``save_model`` function's 
+        local space. This function is to isolate from the previous function's 
+        local space."""
         str_model = str(model.__class__).split('.')[-1][:-2]
         return str_model
 
@@ -433,7 +437,7 @@ def show_py_file_content(file='./imports_and_functions/functions.py'):
     
     Parameter:
     ==========
-    file = `str`; default: 'functions.py',
+    file = `str`; default: './imports_and_functions/functions.py',
                 path to the py file.
     """
     with open(file, 'r') as f:
@@ -459,6 +463,7 @@ def z_dataset_preprocessing_pipeline(X_train,
 
     Parameters:
     ===========
+
     X_train = pandas.DataFrame object; no default,
                 training split of the DataFrame.
     X_test  = pandas.DataFrame object; no default,
@@ -484,7 +489,7 @@ def z_dataset_preprocessing_pipeline(X_train,
                     values are mapped in the range [0, 1]
                 - Normalizer: rescales the vector for each sample to have 
                     unit norm, independently of the distribution of the samples.
-                - None: does not scale data.
+                - None: does not scale data. #::: NOT TESTED :::#
     drop    = str or `None`; default: None.
                 Option to control OneHotEncoder droping.
                 - None : retain all features (the default).
@@ -499,7 +504,7 @@ def z_dataset_preprocessing_pipeline(X_train,
                     turn oversampling on or off; 
                 - `True` oversamples.
                 - `False` no oversampling.
-    return_pipeline_object= boolean; default: False, {not sure how it might be useful though}
+    return_pipeline_object= boolean; default: False, {not sure how it might be useful though #::: NOT TESTED :::#}
                     control object return.
                 - `True` returns object.
                 - `False` does not return object.
@@ -508,12 +513,15 @@ def z_dataset_preprocessing_pipeline(X_train,
           DataFrame will fail.
         - Source can be modified to add more preprocessing steps.
     
+    Stage: Coding
+
     Next steps: 
     - use OOP to make this a class. 
     - Add oversampling method changing option.
-    - add imputer in the pipeline
+    - add imputer in the pipeline.
+    - add and remove steps in pipeline option.
 
-    ---version 0.0.1---
+    ---version 0.0.1 beta---
     """
     # isolating numerical features
     nume_cols = X_train.select_dtypes('number').columns.to_list()
@@ -541,14 +549,14 @@ def z_dataset_preprocessing_pipeline(X_train,
 
     # creating modified X_test
     ## NOTE: possible error if test data has unseen category, in this step.
-    ## for debugging such error modify this and its processing.
+    ## for debugging such error modify this, and its processing steps `in pipe_cate`.
     ret_X_test = pd.DataFrame(
         preprocessor.transform(X_test),
         columns=nume_cols +
         preprocessor.named_transformers_['categorical_features'].
         named_steps['ohe'].get_feature_names(cate_cols).tolist())
-    # NEW ADD
-
+    
+    # NEW ADDITION
     if oversampling:
         smotenc_features = [True] * len(nume_cols) + [False] * len(
             preprocessor.named_transformers_['categorical_features'].
@@ -568,17 +576,19 @@ def z_dataset_preprocessing_pipeline(X_train,
         else:
             return ret_X_train, ret_X_test
     
-def z_model_report_(model,
-                 X_train,
-                 y_train,
-                 X_test,
-                 y_test,
-                 cmap='Greens',
-                 normalize='true',
-                 figsize=(16, 6), 
-                 show_train_report=False,
-                 show_train_roc=False):
-    """ ######## Work in progress, code works.
+def z_experimental_model_report_(model,
+                                 X_train,
+                                 y_train,
+                                 X_test,
+                                 y_test,
+                                 cmap=['Reds', 'Greens'],
+                                 normalize='true',
+                                 figsize=(16, 6),
+                                 show_train_report=False,
+                                 show_train_roc=False,
+                                 fitted_model=False,
+                                 display_labels=['not_met', 'met']):
+    """ ######## Work in progress, code works. Bulding upon the working version of the code.
     Report of model performance using train-test split dataset.
     Shows train and test score, Confusion Matrix and, ROC Curve of performane of test data.
     
@@ -599,14 +609,33 @@ def z_model_report_(model,
     show_train_report= boolean; default: False,
                 - True, to show report.
                 - False, to turn off report.
+    fitted_model = False,
+    display_labels = ['not_met', 'met']
     
     Future plan:
-    - `save model` option in local drive using joblib
+    - `save model` option in local drive using joblib or pickle
+    - return fitted model
+    - diffrent scorer option
+    - turn off test data
+    - bring fuctionality from the old model
+    - rebuild for multiclass using yellowbricks
+    - another version of code for reporting already fitted model #-code ready-#
+    - return reusable report object
+    - add labaling options for 0 and 1 target class in report ===> confusion matrix. #-code ready for two class-#
 
-    ---version 0.0.1---
+    Stage: Concept, idea generation.
+    
+    Changelog:
+    - built skeleton
+    - added fitted_model
+    - added display_labels
+
+    ---version 0.0.1 pre-alpha---
     """
     def str_model_(model):
-        """Helper function to get model class display statement, this text conversion breaks code if performed in ``model_report`` function's local space. This function is to isolate from the previous function's local space."""
+        """Helper function to get model class display statement, this text conversion breaks code if 
+        performed in ``model_report`` function's local space. This function is to isolate from the 
+        previous function's local space. Can use class here"""
         str_model = str(model.__class__).split('.')[-1][:-2]
         display(
             HTML(
@@ -616,7 +645,8 @@ def z_model_report_(model,
     str_model_(model)
     X_train = X_train.copy()
     y_train = y_train.copy()
-    model.fit(X_train, y_train)
+    if fitted_model is False:
+        model.fit(X_train, y_train)
     print(f"{'*'*90}")
     train = model.score(X_train, y_train)
     test = model.score(X_test, y_test)
@@ -637,7 +667,7 @@ def z_model_report_(model,
     print(f"{'*'*90}")
     print("")
     print(f"{'*'*60}")
-    
+
     if (show_train_roc) & (show_train_report):
         print(f"""Classification report on train data of:
         {model}""")
@@ -647,17 +677,17 @@ def z_model_report_(model,
         print(f"{'*'*60}")
         fig, ax = plt.subplots(nrows=1, ncols=2, figsize=figsize)
         metrics.plot_confusion_matrix(model,
-                                    X_test,
-                                    y_test,
-                                    cmap=cmap,
-                                    normalize=normalize,
-                                    ax=ax[0])
+                                      X_train,
+                                      y_train,
+                                      cmap=cmap[0],
+                                      normalize=normalize, display_labels=display_labels,
+                                      ax=ax[0])
         ax[0].title.set_text('Confusion Matrix')
         metrics.plot_roc_curve(model,
-                            X_test,
-                            y_test,
-                            color='gold',
-                            ax=ax[1])
+                               X_train,
+                               y_train,
+                               color='gold',
+                               ax=ax[1])
         ax[1].plot([0, 1], [0, 1], ls='-.', color='white')
         ax[1].grid()
         ax[1].title.set_text('ROC Curve')
@@ -675,20 +705,20 @@ def z_model_report_(model,
     elif show_train_roc:
         print(f"""Confusion Matrix and ROC curve on train data of:
         {model}""")
-        print(f"{'-'*60}")        
+        print(f"{'-'*60}")
         fig, ax = plt.subplots(nrows=1, ncols=2, figsize=figsize)
         metrics.plot_confusion_matrix(model,
-                                    X_test,
-                                    y_test,
-                                    cmap=cmap,
-                                    normalize=normalize,
-                                    ax=ax[0])
+                                      X_train,
+                                      y_train,
+                                      cmap=cmap[0],
+                                      normalize=normalize, display_labels=display_labels,
+                                      ax=ax[0])
         ax[0].title.set_text('Confusion Matrix')
         metrics.plot_roc_curve(model,
-                            X_test,
-                            y_test,
-                            color='gold',
-                            ax=ax[1])
+                               X_train,
+                               y_train,
+                               color='gold',
+                               ax=ax[1])
         ax[1].plot([0, 1], [0, 1], ls='-.', color='white')
         ax[1].grid()
         ax[1].title.set_text('ROC Curve')
@@ -707,8 +737,8 @@ def z_model_report_(model,
     metrics.plot_confusion_matrix(model,
                                   X_test,
                                   y_test,
-                                  cmap=cmap,
-                                  normalize=normalize,
+                                  cmap=cmap[1],
+                                  normalize=normalize, display_labels=display_labels,
                                   ax=ax[0])
     ax[0].title.set_text('Confusion Matrix')
     metrics.plot_roc_curve(model,
@@ -728,11 +758,11 @@ def model_report(model,
                  y_train,
                  X_test,
                  y_test,
-                 cmap='Greens',
+                 cmap=['Reds','Greens'],
                  normalize='true',
                  figsize=(16, 6), 
                  show_train_report=False):
-    """ Work in progress
+    """
     Report of model performance using train-test split dataset.
     Shows train and test score, Confusion Matrix and, ROC Curve of performane of test data.
     
@@ -745,7 +775,8 @@ def model_report(model,
     y_train   = pandas.DataFrame, target variable training data split; no default,
     X_test    = pandas.DataFrame, predictor variable test data split; no default,
     y_test    = pandas.DataFrame, target variable test data split; no default,
-    cmap      = str, colormap of Confusion Matrix; default: 'Greens',
+    cmap      = list of str, colormap of Confusion Matrix; default: ['Reds','Greens'],
+                cmap of train and test data
     normalize = str, normalize count of Confusion Matrix; default: 'true',
                 - `true` to normalize counts.
                 - `false` to show raw scounts.
@@ -753,11 +784,8 @@ def model_report(model,
     show_train_report = boolean; default: False,
                 - True, to show report.
                 - False, to turn off report.
-    
-    Future plan:
-    - `save model` option in local drive using joblib
 
-    ---version 0.9.11---
+    ---version 0.9.12---
     """
     def str_model_(model):
         """Helper function to get model class display statement, this text conversion breaks code if 
@@ -802,15 +830,15 @@ def model_report(model,
         print(f"{'*'*60}")
         fig, ax = plt.subplots(nrows=1, ncols=2, figsize=figsize)
         metrics.plot_confusion_matrix(model,
-                                      X_test,
-                                      y_test,
-                                      cmap=cmap,
+                                      X_train,
+                                      y_train,
+                                      cmap=cmap[0],
                                       normalize=normalize,
                                       ax=ax[0])
         ax[0].title.set_text('Confusion Matrix')
         metrics.plot_roc_curve(model,
-                               X_test,
-                               y_test,
+                               X_train,
+                               y_train,
                                color='gold',
                                ax=ax[1])
         ax[1].plot([0, 1], [0, 1], ls='-.', color='white')
@@ -832,7 +860,7 @@ def model_report(model,
     metrics.plot_confusion_matrix(model,
                                   X_test,
                                   y_test,
-                                  cmap=cmap,
+                                  cmap=cmap[1],
                                   normalize=normalize,
                                   ax=ax[0])
     ax[0].title.set_text('Confusion Matrix')
@@ -847,3 +875,32 @@ def model_report(model,
 
     plt.tight_layout()
     plt.show()
+
+def convert_html_to_image(st="Does nothing"):
+    """Does nothing right now."""
+    # use this
+    # pip install imgkit
+    print(st)
+
+def javascript_formatter(javascript,background_color='White', font_color='black'):
+    """
+    Helper fuction to jormat javascript object's background and font color. Helpful to use in themed notebook.
+    
+    Parameters:
+    ===========
+    javascript = str; no default,
+                javascript formated as html string.
+    background_color= str; default: 'White',
+                Note: follow html syntax and convention
+    font_color= str; default: 'black',
+                Note: follow html syntax and convention
+    
+    --version 0.0.1--
+    """
+    display(HTML(f"""<div style="background-color:{background_color}; color:{font_color};">{javascript}</div>"""))
+
+def show_path():
+    """Show path locations"""
+    import sys
+    for p in sys.path:
+        print(p)

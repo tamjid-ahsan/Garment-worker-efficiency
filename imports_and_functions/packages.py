@@ -11,21 +11,19 @@ from IPython.display import display, HTML, Markdown
 
 # plotting
 import matplotlib.pyplot as plt
+import matplotlib.ticker as plticker
 import seaborn as sns
-# import plotly.graph_objs as go
-# import plotly.express as px
 
 # Machine Learning
 # preprocessing
 from sklearn import set_config
-from sklearn.model_selection import train_test_split#, cross_val_predict, cross_validate
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, OneHotEncoder
 # from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn import metrics
 from imblearn.over_sampling import SMOTE,SMOTENC
-
 
 # model
 from sklearn.dummy import DummyClassifier
@@ -40,12 +38,8 @@ import xgboost as xgb
 
 from catboost import CatBoostClassifier
 
-# Model Explainers
+# Model Explainers and explorers
 # from yellowbrick.classifier.rocauc import roc_auc, precision_recall_curve, confusion_matrix, classification_report, ClassPredictionError
-
+from sklearn import tree
 import shap
-import lime
-import interpret
 import eli5
-
-from time import sleep

@@ -4,4 +4,4 @@
 __pycache__
 *.db
 *.pytest_cache
-.vscode/settings.json
+.vscode
