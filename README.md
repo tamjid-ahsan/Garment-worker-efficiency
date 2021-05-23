@@ -103,20 +103,7 @@ df.sample(10)
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -569,7 +556,7 @@ X_train, y_train = XX_oversampled.copy(), yy_oversampled.copy()
 
 
 #### Pipelining
-I used pipeline from sklraen to transform data.
+I used pipeline from sklraen with a custom function to transform data. These are available in this repository. 
 
 
 
@@ -631,7 +618,7 @@ dummy_classifier = DummyClassifier(strategy='stratified')
     
 
 
-    ==========================================================================================================================================================================
+    ===============================================================================
     ************************************************************
     Classification report on test data of:
         DummyClassifier(strategy='stratified')
