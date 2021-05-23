@@ -10,8 +10,9 @@ from sklearn import metrics
 from imblearn.over_sampling import SMOTE, SMOTENC
 import joblib 
 import time
+### function name starting with "z_" are experimental and not fully tested ###
 # Future plan: restructure functions to behave as attached to class using OOP#
-# handle multinomial target plotting
+# handle multinomial target plotting, use modin in place of pandas
 
 def its_alive(str_='Hellow World!! I am Alive!!!'):
     """testing import"""
@@ -301,6 +302,7 @@ def coefficients_of_model(model, log_scale=True):
 def save_model(model, location='',custom_prefix=''):
     """
     Saves object locally as binary format with and as joblib.
+    Adds local machine time to name to the file for easy recongnition.
 
     Parameters:
     ===========
@@ -310,6 +312,9 @@ def save_model(model, location='',custom_prefix=''):
     custom_prefix = str; default: '',
             Adds prefix to file
     
+    Future plan: 
+    - modify naming options
+   
     --version 0.0.1--
     
     """
@@ -588,7 +593,7 @@ def z_experimental_model_report_(model,
                                  show_train_roc=False,
                                  fitted_model=False,
                                  display_labels=['not_met', 'met']):
-    """ ######## Work in progress, code works. Bulding upon the working version of the code.
+    """ ### Work in progress, code works. Bulding upon the working version of the code.###
     Report of model performance using train-test split dataset.
     Shows train and test score, Confusion Matrix and, ROC Curve of performane of test data.
     
@@ -615,13 +620,14 @@ def z_experimental_model_report_(model,
     Future plan:
     - `save model` option in local drive using joblib or pickle
     - return fitted model
-    - diffrent scorer option
-    - turn off test data
+    - diffrent scorer option for report
+    - turn off testing model performance on test data 
     - bring fuctionality from the old model
     - rebuild for multiclass using yellowbricks
     - another version of code for reporting already fitted model #-code ready-#
     - return reusable report object
-    - add labaling options for 0 and 1 target class in report ===> confusion matrix. #-code ready for two class-#
+    - add labaling options for 0 and 1 target class in report ===> confusion matrix. #-code ready for two class- rethink implimentation#
+    - rethink control flow of display options, am I using more code than necessary?
 
     Stage: Concept, idea generation.
     
@@ -761,7 +767,8 @@ def model_report(model,
                  cmap=['Reds','Greens'],
                  normalize='true',
                  figsize=(16, 6), 
-                 show_train_report=False):
+                 show_train_report=False,
+                 unfitted_model=True):
     """
     Report of model performance using train-test split dataset.
     Shows train and test score, Confusion Matrix and, ROC Curve of performane of test data.
@@ -784,8 +791,12 @@ def model_report(model,
     show_train_report = boolean; default: False,
                 - True, to show report.
                 - False, to turn off report.
+    unfitted_model = bool; default: True,
+                - if True, fits model to train data and generates report.
+                - if False, does not fits model and generates report.
+                Use False for previously fitted model.
 
-    ---version 0.9.12---
+    ---version 0.9.14---
     """
     def str_model_(model):
         """Helper function to get model class display statement, this text conversion breaks code if 
@@ -800,7 +811,8 @@ def model_report(model,
     str_model_(model)
     X_train = X_train.copy()
     y_train = y_train.copy()
-    model.fit(X_train, y_train)
+    if unfitted_model:
+        model.fit(X_train, y_train)
     print(f"{'*'*90}")
     train = model.score(X_train, y_train)
     test = model.score(X_test, y_test)
@@ -884,7 +896,7 @@ def convert_html_to_image(st="Does nothing"):
 
 def javascript_formatter(javascript,background_color='White', font_color='black'):
     """
-    Helper fuction to jormat javascript object's background and font color. Helpful to use in themed notebook.
+    Helper fuction to jormat javascript object's background and font color. Helpful to use in a themed notebook.
     
     Parameters:
     ===========
