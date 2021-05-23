@@ -1103,18 +1103,18 @@ This plot is showing contribution of each feature on a machine learning model pr
 - Few explanations:
 <br>
 
-    | Features | Probability of goal met | Probability of goal not met |
-    |-|-|-|
-    | department_finishing | Lower Value | Higher Value |
-    | department_sweing | High Value | Lower Value |
-    | idle_men | Lower Value |  |
-    | idle_time | Lower Value |  |
-    | incentive | High Value | Lower Value |
-    | no_of_workers | Above Average | Below Average And High |
-    | over_time | Average | Below Average And High |
-    | smv | Above Average | Below Average And High |
-    | targeted_productivity | Lower Value | Higher Value |
-    | wip | High Value | Lower Value |
+| Features | Probability of goal met | Probability of goal not met |
+|-|-|-|
+| department_finishing | Lower Value | Higher Value |
+| department_sweing | High Value | Lower Value |
+| idle_men | Lower Value |  |
+| idle_time | Lower Value |  |
+| incentive | High Value | Lower Value |
+| no_of_workers | Above Average | Below Average And High |
+| over_time | Average | Below Average And High |
+| smv | Above Average | Below Average And High |
+| targeted_productivity | Lower Value | Higher Value |
+| wip | High Value | Lower Value |
 
 
 
