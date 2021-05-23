@@ -120,6 +120,7 @@ def num_col_for_plotting(row, col=3):
 def distribution_of_features(df, n_cols=3, fig_size=(16, 26), color_plot='gold', kde_show=True, label_rotation=45, set_loglevel='warning'):
     """
     Plots distribution of features in a pandas.DataFrame.
+    Does not work on feature encoded as category.
 
     Parameters:
     ===========
