@@ -18,7 +18,7 @@ def its_alive(str_='Hellow World!! I am Alive!!!'):
     """testing import"""
     print(str_)
     
-def check_NaN(df):
+def check_NaN(df, matrix_display=True):
     """
     Checks for NaN in the pandas DataFrame and spits a DataFrame of report.
     Uses df.isnull() method.
@@ -26,13 +26,16 @@ def check_NaN(df):
     Parameters:
     ===========
     df = pandas.DataFrame
+    matrix_display=bool; default: True;
+                - `True` displays missingno matrix.
     
     Returns:
     ========
     pandas.DataFrame
 
-    ---version 0.9---
+    ---version 0.9.1---
     """
+    import missingno
     null_checking = []
     for column in df.columns:
         not_null = df[column].isnull().value_counts()[0]
@@ -43,6 +46,9 @@ def check_NaN(df):
         temp_dict = {'name': column, 'is_null': is_null, 'not_null': not_null}
         null_checking.append(temp_dict)
     df_ = pd.DataFrame(null_checking)
+    if matrix_display:
+        ax=missingno.matrix(df,figsize=(17, 7))
+        ax.set_title("Pattern of missing values",fontweight=6,fontsize=26)
     return df_
 
 

@@ -8,6 +8,7 @@ import pandas as pd
 pd.set_option('display.max_columns', 0)
 import numpy as np
 from IPython.display import display, HTML, Markdown
+import missingno
 
 # plotting
 import matplotlib.pyplot as plt
