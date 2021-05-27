@@ -2,11 +2,10 @@
 * Student pace: Full Time
 * Scheduled project review date/time: May 27, 2021, 05:00 PM [DST]
 * Instructor name: James Irving
-* Blog post URL: TBA
 
 # INTRODUCTION
 
-The garment industry one of the highly labor-intensive industries that needs large number of human resources to efficient and keep up with demand for garment products across the globe. Because of this inherent dependency on human capital, the production of a garment company comprehensively relies on the productivity of the employees in different departments. Often actual productivity of the garment employees is not in line with targeted productivity that was set. This is a high priority for a organization to achieve deadline and maximize profit by ensuring proper utilization of resources. When any productivity gap occurs, the company faces a huge loss in production.<br>
+The garment industry one of the highly labor-intensive industries that needs large number of human resources to be efficient and keep up with demand for garment products across the globe. Because of this inherent dependency on human capital, the production of a garment company comprehensively relies on the productivity of the employees in different departments. Often actual productivity of the garment employees is not in line with targeted productivity that was set. This is a high priority for a organization to achieve deadline and maximize profit by ensuring proper utilization of resources. When any productivity gap occurs, the company faces a huge loss in production.<br>
 
 
 # BUSINESS PROBLEM
@@ -439,20 +438,6 @@ Generally finishing department worker size is low.
 
 
 Finishing department fails to achieve goal more often. 
-
-#### `smv` on `performance`
-
-    
-![png](./assets/output_75_0.png)
-    
-
-
-
-    
-![png](./assets/output_75_1.png)
-    
-
-
 
 
 #### `wip` on `performance`
@@ -1063,8 +1048,7 @@ This means those features were often used for building the forests. And those fe
 
 ## Selecting Best model
 
-Random Forest model is the best one, this can achieve perfect prediction with minimal effort. 
-<br>This is `rf_clf` model object in this notebook.
+Random Forest model is the best one, this can achieve perfect prediction with minimal effort.
 
 # INTERPRET
 
@@ -1100,6 +1084,8 @@ This model can be used with confidence for predicting employee performance. It c
 - Few insights where to focus
     - `incentive` is very important decider for performance.
     - tune optimal `no_of_workers` for better performance.
+    - manpower assignment in `team`, more specificly for finishing should be re-evaluated as they are underperforming
+    - based on observation of `smv` employees either need training or allocation of time for task (fast and long jobs) shold be re-considered.
     
 
 # NEXT STEPS
