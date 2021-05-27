@@ -668,12 +668,6 @@ Most of them are correlated with the target except `no_of_style_change` and `tar
 * `overtime` and `no_of_worker` is correlated.
 
 
-```python
-print(f"""Features should be dropped: {
-                                    fun.drop_features_based_on_correlation(
-                                    df, threshold=0.75)
-                                        }""")
-```
 
 
 
@@ -759,7 +753,7 @@ fun.model_report(logreg,
     
 
 
-Overall good performance. Can detect majority of true negatives and positives, with good recall and and f1. ROC curve also looks good.
+Overall average performance. Can detect majority of true negatives and positives, with good recall and and f1. ROC curve also looks good.
 
 
     
@@ -771,7 +765,7 @@ By looking at the coefs of the model, I can have a idea of feature importance an
 
 ### grid search with Cross Validation
 
-
+Grid search parameters:
 ```python
 logreg_gs = LogisticRegression(max_iter=1e4,
                                class_weight='balanced',
@@ -792,12 +786,7 @@ gridsearch_logreg = GridSearchCV(estimator=logreg_gs,
 
 
 
-```python
-
-gridsearch_logreg.fit(X_train_log_reg, y_train)
-print(f"Best Parameters by gridsearch:\t{gridsearch_logreg.best_params_}")
-print(f"Best Estimator by gridsearch:\t{gridsearch_logreg.best_estimator_}")
-```
+Result:
 
     Best Parameters by gridsearch:	{'C': 0.1, 'penalty': 'l1', 'solver': 'saga', 'tol': 0.0001}
     Best Estimator by gridsearch:	LogisticRegression(C=0.1, class_weight='balanced', max_iter=10000.0, n_jobs=-1,
@@ -922,7 +911,7 @@ fun.model_report(knn,
 Way better performance than previous model. True negative and positives are better, all the metrics are looking good. ROC curve is improved. But this can be better better by some hyperparameter tuning.
 
 ### grid search with Cross Validation
-
+These are the grid search parameters.
 
 ```python
 knn_gs = KNeighborsClassifier(n_jobs=-1)
@@ -931,8 +920,7 @@ params = {
     'weights': ['uniform', 'distance'],
     'algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
     'p': [1, 2, 2.5, 3, 4],
-    'leaf_size': [30, 40],
-    #     'metric': ['minkowski', 'manhattan', 'euclidean']
+    'leaf_size': [30, 40]
 }
 gridsearch_knn = GridSearchCV(estimator=knn_gs,
                               param_grid=params,
@@ -940,20 +928,7 @@ gridsearch_knn = GridSearchCV(estimator=knn_gs,
                               scoring='precision',return_train_score=True)
 ```
 
-
-
-
-
-
-```python
-gridsearch_knn.fit(X_train_knn, y_train)
-print(f"Best Parameters by gridsearch:\t{gridsearch_knn.best_params_}")
-print(f"Best Estimator by gridsearch:\t{gridsearch_knn.best_estimator_}")
-
-knn_gs_best = gridsearch_knn.best_estimator_
-fun.model_report(knn_gs_best, X_train_knn, y_train, X_test_knn,
-             y_test)
-```
+Result:
 
     Best Parameters by gridsearch:	{'algorithm': 'auto', 'leaf_size': 30, 'n_neighbors': 17, 'p': 1, 'weights': 'distance'}
     Best Estimator by gridsearch:	KNeighborsClassifier(n_jobs=-1, n_neighbors=17, p=1, weights='distance')

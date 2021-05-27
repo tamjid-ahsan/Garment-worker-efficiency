@@ -7,7 +7,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from IPython.display import display, HTML, Markdown
 from sklearn import metrics
-from imblearn.over_sampling import SMOTE, SMOTENC
+from imblearn.over_sampling import SMOTENC
 import joblib 
 import time
 ### function name starting with "z_" are experimental and not fully tested ###
