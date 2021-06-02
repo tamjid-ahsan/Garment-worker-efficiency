@@ -63,7 +63,7 @@ Features with explanation.
 ___
 [1]  ```Rahim, M. S., Imran, A. A., & Ahmed, T. (2021). Mining the Productivity Data of Garment Industry. International Journal of Business Intelligence and Data Mining, 1(1), 1. ```
 <br>[2] Bangladesh is a developing country which is the second largest apparel exporting country in the world.
-<br>[3] 1 USD = 84.83 BDT, as of May 23,2021. Check [here](https://www.bb.org.bd/en/index.php/econdata/exchangerate) from Bangladesh Bank.
+<br>[3] 1 USD = 84.83 BDT, as of May 23,2021. Check [here](https://www.bb.org.bd/en/index.php/econdata/exchangerate) to see rates from Bangladesh Bank.
 <br>[4] Measured by production production engineers of the organization. Methodology of this calculation is not public.
 
 
